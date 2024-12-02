@@ -93,7 +93,7 @@ export default {
     return {
       thumbnails: [], // Array 2D untuk menyimpan thumbnail per layer
       layers: [], // Daftar layer dari Resolume
-      apiBaseUrl: "http://192.168.0.105:8080/api/v1", // URL Resolume API
+      apiBaseUrl: "http://192.168.100.156:8080/api/v1", // URL Resolume API
       layerIndex: 1, // Nilai default untuk Layer Index
       clipIndex: 1, // Nilai default untuk Clip Index
       responseMessage: "", // Pesan respons dari request
