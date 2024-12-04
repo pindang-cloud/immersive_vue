@@ -57,13 +57,14 @@
 
 <script>
 import axios from "axios";
+import config  from "./config";
 
 export default {
   data() {
     return {
       layers: [], // Menyimpan data layer dan clip terkait
       responseMessage: "", // Pesan respons dari API
-      apiBaseUrl: "http://localhost:8080/api/v1", // URL Resolume API
+      apiBaseUrl: config.apiBaseUrl,
       isLoading: false,
     };
   },
