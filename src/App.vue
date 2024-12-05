@@ -20,7 +20,7 @@
       >
         <!-- Cell untuk layer -->
         <template #cell(name)="data">
-          <div class="text-center">Layer {{ data.index + 1 }}</div>
+          <div class="text-center">Meja {{ data.index + 1 }}</div>
         </template>
 
 
@@ -49,7 +49,7 @@
 
       <!-- Tombol untuk menambahkan layer -->
       <b-button @click="addLayer" variant="success" class="mt-3">
-        Tambah Layer
+        Tambah Meja
       </b-button>
 
       <!-- Tampilkan pesan respons -->
