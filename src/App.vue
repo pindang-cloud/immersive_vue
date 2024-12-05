@@ -4,20 +4,10 @@
       <h2 class="text-center mb-3">Pilih Layer dan Clip</h2>
 
       <!-- Spinner untuk loading -->
-      <b-spinner
-        v-if="isLoading"
-        class="d-block mx-auto"
-        label="Loading..."
-      ></b-spinner>
+      <b-spinner v-if="isLoading" class="d-block mx-auto" label="Loading..." ></b-spinner>
 
       <!-- Tabel dengan gambar tersusun horizontal -->
-      <b-table
-        v-if="!isLoading && layers.length > 0"
-        :items="layers"
-        :fields="tableFields"
-        class="mt-3"
-        responsive
-      >
+      <b-table v-if="!isLoading && layers.length > 0" :items="layers" :fields="tableFields" class="mt-3" responsive >
         <!-- Cell untuk layer -->
         <template #cell(name)="data">
           <div class="text-center">Meja {{ data.index + 1 }}</div>
@@ -27,20 +17,8 @@
         <!-- Cell untuk clips -->
         <template #cell(clips)="data">
           <div class="clip-container">
-            <div
-              v-for="(clip, index) in data.item.clips"
-              :key="index"
-              class="clip-thumbnail"
-              @click="connectClip(data.index + 1, index + 1)"
-              title="Klik untuk Connect"
-            >
-              <b-img
-                :src="clip.thumbnail"
-                alt="Clip Thumbnail"
-                fluid
-                class="mb-2"
-                v-if="clip.thumbnail"
-              ></b-img>
+            <div v-for="(clip, index) in data.item.clips" :key="index" class="clip-thumbnail" @click="connectClip(data.index + 1, index + 1)" title="Klik untuk Connect">
+              <b-img :src="clip.thumbnail" alt="Clip Thumbnail" fluid class="mb-2" v-if="clip.thumbnail"></b-img>
               <p class="clip-name">{{ clip.name?.value || "Unnamed Clip" }}</p>
             </div>
           </div>
@@ -53,12 +31,7 @@
       </b-button>
 
       <!-- Tampilkan pesan respons -->
-      <b-alert
-        v-if="responseMessage"
-        variant="info"
-        class="mt-3"
-        dismissible
-      >
+      <b-alert v-if="responseMessage" variant="info" class="mt-3" dismissible >
         {{ responseMessage }}
       </b-alert>
     </b-container>
