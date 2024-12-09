@@ -97,6 +97,7 @@ import axios from "axios";
 import config from "./config";
 
 export default {
+  name: "app",
   data() {
     return {
       layers: [], // Data untuk tabel
