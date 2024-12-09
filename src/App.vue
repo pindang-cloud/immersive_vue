@@ -148,7 +148,7 @@ export default {
 
             return {
               Meja: layer.name.value || `Layer ${layerIndex + 1}`,
-              konten: validKonten, // Hanya memasukkan konten valid
+              konten: validKonten,
             };
           })
         );
