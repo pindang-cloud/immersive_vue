@@ -97,7 +97,6 @@ import axios from "axios";
 import config from "./config";
 
 export default {
-  name: "app",
   data() {
     return {
       layers: [], // Data untuk tabel
@@ -149,7 +148,7 @@ export default {
 
             return {
               Meja: layer.name.value || `Layer ${layerIndex + 1}`,
-              konten: validKonten,
+              konten: validKonten, // Hanya memasukkan konten valid
             };
           })
         );
