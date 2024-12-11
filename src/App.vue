@@ -1,23 +1,24 @@
 <template>
-  <div>
-    <b-navbar type="light" variant="light">
-      <b-navbar variant="faded" type="light">
-        <b-navbar-brand tag="h1" class="mb-0">Immersive Dinner</b-navbar-brand>
-      </b-navbar>
+    <div>
+      <b-navbar type="light" variant="light">
+        <b-navbar variant="faded" type="light">
+          <b-navbar-brand tag="h1" class="mb-0">Immersive Dinner</b-navbar-brand>
+        </b-navbar>
 
-      <b-navbar-nav class="ml-auto">
-        <b-nav-item-dropdown id="my-nav-dropdown" text="Konten" toggle-class="nav-link-custom" right>
-          <b-dropdown-item @click="addLayer">
+        <b-navbar-nav class="ml-auto">
+          <b-nav-item-dropdown id="my-nav-dropdown" text="Konten" toggle-class="nav-link-custom" right>
+            <b-dropdown-item @click="addLayer">
               Tambah Meja
-          </b-dropdown-item>
-          <b-dropdown-divider></b-dropdown-divider>
-          <b-dropdown-item @click="addContent">Tambah Konten</b-dropdown-item>
-          <b-dropdown-divider></b-dropdown-divider>
-          <b-dropdown-item>Test</b-dropdown-item>
-        </b-nav-item-dropdown>
-      </b-navbar-nav>
-    </b-navbar>
-    <b-container>
+            </b-dropdown-item>
+            <b-dropdown-item @click="showUploadDialog">
+              Upload Konten
+            </b-dropdown-item>
+            <b-dropdown-divider></b-dropdown-divider>
+            <b-dropdown-item>Test</b-dropdown-item>
+          </b-nav-item-dropdown>
+        </b-navbar-nav>
+      </b-navbar>
+      <b-container>
       <h2 class="text-center mb-3 mt-3">Pilih Meja dan Konten</h2>
 
       <!-- Spinner untuk loading -->
@@ -36,11 +37,11 @@
             <div v-for="(clip, index) in data.item.konten" :key="index" class="konten-thumbnail" @click="connectClip(data.index + 1, index + 1)" title="Klik untuk Connect">
               <b-img :src="clip.thumbnail" alt="Konten Thumbnail" fluid class="mb-2" v-if="clip.thumbnail"></b-img>
               <p class="konten-name">{{ clip.name?.value || "Unnamed Konten" }}</p>
+              <b-button variant="outline-secondary" @click="showLayerClipDialog(data.index + 1, index + 1)">Select Layer & Clip</b-button>
             </div>
           </div>
         </template>
       </b-table>
-
       <!-- Tampilkan pesan respons -->
       <b-alert v-if="responseMessage" variant="info" class="mt-3" dismissible >
         {{ responseMessage }}
@@ -95,6 +96,9 @@
 <script>
 import axios from "axios";
 import config from "./config";
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+// import path from 'path-browserify'; // Gunakan path-browserify untuk manipulasi jalur file
 
 export default {
   data() {
@@ -103,10 +107,123 @@ export default {
       responseMessage: "", // Pesan dari operasi API
       apiBaseUrl: config.apiBaseUrl,
       isLoading: false, // Status loading
+      video: [],
     };
   },
   methods: {
-    // Fungsi untuk memuat data dari API
+    async fetchVideos() {
+      // Set loading state
+      this.loading = true;
+      this.error = null;
+
+      try {
+        // Gunakan axios untuk fetch
+        const response = await axios.get('http://localhost:3000/get-videos');
+        
+        // Update videos
+        this.videos = response.data.videos;
+        
+        // Log untuk debugging
+        console.log('Fetched Videos:', this.videos);
+
+      } catch (error) {
+        // Tangani error
+        console.error('Error fetching videos:', error);
+        this.error = error.message || 'Gagal mengambil video';
+        
+        // Optional: Tampilkan error di konsol atau gunakan metode notifikasi lain
+        console.error('Video Fetch Error:', this.error);
+      } finally {
+        // Matikan loading
+        this.loading = false;
+      }
+    },
+    async showLayerClipDialog(layerIndex, clipIndex) {
+      console.log(`Layer: ${layerIndex}, Clip: ${clipIndex}`);
+
+      
+    },
+    async showUploadDialog() {
+  const { value: file } = await Swal.fire({
+    title: 'Upload Video',
+    html: `
+      <input id="file-input" type="file" accept="video/*" class="form-control">
+      <div class="text-center">
+        <video id="video-preview" controls style="max-width: 100%; margin-top: 10px; display: none;"></video>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Upload',
+    didOpen: () => {
+      const fileInput = Swal.getPopup().querySelector('#file-input');
+      const videoPreview = Swal.getPopup().querySelector('#video-preview');
+
+      fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          console.log('Selected File:', file);
+          const url = URL.createObjectURL(file);
+          videoPreview.src = url;
+          videoPreview.style.display = 'block';
+        } else {
+          videoPreview.style.display = 'none';
+        }
+      });
+    },
+    preConfirm: () => {
+      const fileInput = Swal.getPopup().querySelector('#file-input');
+      if (!fileInput.files.length) {
+        Swal.showValidationMessage('Please select a video file!');
+        return null;
+      }
+      return fileInput.files[0];
+    },
+  });
+
+  if (file) {
+    const formData = new FormData();
+    formData.append('video', file);
+
+    try {
+      // Log detail file
+      console.log('Uploading File Details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+
+      const response = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: formData,
+        // Optional: tambahkan timeout
+        signal: AbortSignal.timeout(30000)
+      });
+
+      // Log response
+      console.log('Response Status:', response.status);
+
+      // Parse respons
+      const result = await response.json();
+
+      // Cek status respons
+      if (response.ok) {
+        console.log('Upload Successful:', result);
+        Swal.fire('Success!', 'Video uploaded successfully!', 'success');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Complete Upload Error:', error);
+      
+      // Tampilkan pesan error mendetail
+      Swal.fire('Upload Error', 
+        `Failed to upload video: ${error.message}`, 
+        'error'
+      );
+    }
+  }
+},
+
     async fetchLayers() {
       this.isLoading = true;
       try {
@@ -230,6 +347,8 @@ export default {
   },
   mounted() {
     this.fetchLayers(); // Memuat data saat komponen dipasang
+    this.fetchVideos();
   },
+
 };
 </script>
