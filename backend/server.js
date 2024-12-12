@@ -4,10 +4,17 @@ const path = require('path');
 const mysql = require('mysql2/promise'); // Gunakan promise version
 const cors = require('cors');
 const fs = require('fs');
+const port = 8080;
 
 const app = express();
 const PORT = 3000;
-
+let connection;
+const dbConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'immersivedinner'
+};
 // Konfigurasi CORS yang lebih permisif untuk debugging
 app.use(cors({
   origin: '*',
@@ -25,15 +32,6 @@ if (!fs.existsSync(uploadDir)){
   fs.mkdirSync(uploadDir);
 }
 
-// Konfigurasi koneksi database dengan promise
-let connection;
-const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'immersivedinner'
-};
-
 // Fungsi untuk membuat koneksi database
 async function createDatabaseConnection() {
   try {
@@ -41,15 +39,12 @@ async function createDatabaseConnection() {
     console.log('Database connection successful');
   } catch (error) {
     console.error('Database connection failed:', error);
-    // Coba reconnect setelah beberapa saat
     setTimeout(createDatabaseConnection, 5000);
   }
 }
 
-// Inisialisasi koneksi database
 createDatabaseConnection();
 
-// Konfigurasi penyimpanan file
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log('Destination folder:', uploadDir);
@@ -62,15 +57,13 @@ const storage = multer.diskStorage({
   }
 });
 
-// Konfigurasi upload
 const upload = multer({ 
   storage: storage,
   limits: { 
-    fileSize: 100 * 1024 * 1024 // 100MB
+    fileSize: 100 * 1024 * 1024 
   }
 }).single('video');
 
-// Endpoint upload video dengan debugging lengkap
 app.post('/upload', (req, res) => {
   console.log('Upload endpoint hit');
   
@@ -134,26 +127,34 @@ app.post('/upload', (req, res) => {
   });
 });
 
+app.get
+
 app.get('/get-videos', async (req, res) => {
   try {
-    // Query untuk mengambil semua video
-    const query = 'USE immersivedinner; SELECT * FROM videos ORDER BY created_at DESC';
+    // Query untuk mengambil semua data dari tabel 'videos'
+    const [rows] = await connection.execute('SELECT * FROM videos');
     
-    // Eksekusi query
-    const [videos] = await db.promise().query(query);
-
-    // Kirim respons
-    res.status(200).json({ 
-      message: 'Videos retrieved successfully',
-      total: videos.length,
-      videos: videos 
+    // Pastikan data dikembalikan dalam bentuk array
+    const videos = rows.map(row => ({
+      id_video: row.id_video,
+      nama_video: row.nama_video,
+      path: row.path,
+      created_at: row.created_at
+    }));
+ 
+    // Kirim respons JSON dengan data yang berhasil diambil
+    res.status(200).json({
+      success: true,
+      videos: videos
     });
-
   } catch (error) {
-    console.error('Error fetching videos:', error);
-    res.status(500).json({ 
-      error: 'Failed to retrieve videos', 
-      message: error.message 
+    console.error('Error fetching videos:', error.message);
+
+    // Kirim respons error jika terjadi masalah
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch videos',
+      message: error.message
     });
   }
 });
@@ -168,7 +169,7 @@ app.use((err, req, res, next) => {
 });
 
 // Jalankan server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 

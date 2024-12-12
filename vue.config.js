@@ -17,15 +17,15 @@ const isPortAvailable = (port) => {
 // Menentukan port Vue.js secara dinamis
 const getPort = async () => {
   const is8081Available = await isPortAvailable(8081);
-  return is8081Available ? 8081 : 8082; // Pilih port 8081 jika tersedia, jika tidak pilih 8082
+  return is8081Available ? 8081 : 8082;
 };
 
 module.exports = async () => {
-  const port = await getPort(); // Ambil port yang tersedia
+  const port = await getPort();
 
   return {
     devServer: {
-      port: port, // Gunakan port yang ditemukan
+      port: port,
     },
   };
 };
