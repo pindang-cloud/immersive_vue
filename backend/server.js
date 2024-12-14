@@ -26,10 +26,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Buat direktori uploads jika belum ada
-const uploadDir = path.join(__dirname, 'video'); // Sesuaikan dengan folder Anda
-if (!fs.existsSync(uploadDir)){
-  fs.mkdirSync(uploadDir);
+const videoDir = path.join(__dirname, 'video');
+app.use('/video', express.static(videoDir));
+
+// Membuat direktori video jika belum ada
+if (!fs.existsSync(videoDir)){
+  fs.mkdirSync(videoDir, { recursive: true });
 }
 
 // Fungsi untuk membuat koneksi database
@@ -47,8 +49,8 @@ createDatabaseConnection();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log('Destination folder:', uploadDir);
-    cb(null, uploadDir);
+    console.log('Destination folder:', videoDir);
+    cb(null, videoDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}_${file.originalname}`;
@@ -59,9 +61,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { 
-    fileSize: 100 * 1024 * 1024 
-  }
 }).single('video');
 
 app.post('/upload', (req, res) => {

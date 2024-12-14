@@ -14,7 +14,6 @@
               Upload Konten
             </b-dropdown-item>
             <b-dropdown-divider></b-dropdown-divider>
-            <b-dropdown-item>Test</b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-navbar>
@@ -37,7 +36,7 @@
             <div v-for="(clip, index) in data.item.konten" :key="index" class="konten-thumbnail" @click="connectClip(data.index + 1, index + 1)" title="Klik untuk Connect">
               <b-img :src="clip.thumbnail" alt="Konten Thumbnail" fluid class="mb-2" v-if="clip.thumbnail"></b-img>
               <p class="konten-name">{{ clip.name?.value || "Unnamed Konten" }}</p>
-              <b-button variant="outline-secondary" @click="showLayerClipDialog(data.index + 1, index + 1)">Select Layer & Clip</b-button>
+              <b-button variant="outline-secondary" @click="showLayerClipDialog(data.index + 1, index + 1)">Ganti Clip</b-button>
             </div>
           </div>
         </template>
@@ -103,126 +102,222 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 export default {
   data() {
     return {
-      layers: [], // Data untuk tabel
-      responseMessage: "", // Pesan dari operasi API
+      layers: [],
+      responseMessage: "",
       apiBaseUrl: config.apiBaseUrl,
-      isLoading: false, // Status loading
+      isLoading: false,
       video: [],
     };
   },
   methods: {
     async fetchVideos() {
-      // Set loading state
-      this.loading = true;
-      this.error = null;
-
       try {
-        // Gunakan axios untuk fetch
-        const response = await axios.get('http://localhost:3000/get-videos');
+        const response = await axios.get('http://localhost:3000/get-videos', {
+          timeout: 10000, 
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
         
-        // Update videos
-        this.videos = response.data.videos;
-        
-        // Log untuk debugging
-        console.log('Fetched Videos:', this.videos);
+        if (response.data && Array.isArray(response.data.videos)) {
+          this.videos = response.data.videos;
+          console.log('Fetched Videos');
+        } else {
+          throw new Error('Invalid response format');
+        }
 
       } catch (error) {
-        // Tangani error
-        console.error('Error fetching videos:', error);
-        this.error = error.message || 'Gagal mengambil video';
-        
-        // Optional: Tampilkan error di konsol atau gunakan metode notifikasi lain
-        console.error('Video Fetch Error:', this.error);
-      } finally {
-        // Matikan loading
-        this.loading = false;
-      }
-    },
-    async showLayerClipDialog(layerIndex, clipIndex) {
-      console.log(`Layer: ${layerIndex}, Clip: ${clipIndex}`);
-
-      
-    },
-    async showUploadDialog() {
-  const { value: file } = await Swal.fire({
-    title: 'Upload Video',
-    html: `
-      <input id="file-input" type="file" accept="video/*" class="form-control">
-      <div class="text-center">
-        <video id="video-preview" controls style="max-width: 100%; margin-top: 10px; display: none;"></video>
-      </div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: 'Upload',
-    didOpen: () => {
-      const fileInput = Swal.getPopup().querySelector('#file-input');
-      const videoPreview = Swal.getPopup().querySelector('#video-preview');
-
-      fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          console.log('Selected File:', file);
-          const url = URL.createObjectURL(file);
-          videoPreview.src = url;
-          videoPreview.style.display = 'block';
+        if (error.response) {
+          this.error = `Server Error: ${error.response.status}`;
+          console.error('Server Response Error:', {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers
+          });
         } else {
-          videoPreview.style.display = 'none';
+          this.error = error.message || 'Gagal mengambil video';
+          console.error('Fetch Videos Error:', error);
         }
-      });
-    },
-    preConfirm: () => {
-      const fileInput = Swal.getPopup().querySelector('#file-input');
-      if (!fileInput.files.length) {
-        Swal.showValidationMessage('Please select a video file!');
-        return null;
       }
-      return fileInput.files[0];
     },
-  });
 
-  if (file) {
-    const formData = new FormData();
-    formData.append('video', file);
+    async showLayerClipDialog(layerIndex, clipIndex) {
+  console.log(`Layer: ${layerIndex}, Clip: ${clipIndex}`);
 
-    try {
-      // Log detail file
-      console.log('Uploading File Details:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
+  try {
+    // Ambil daftar video dari server
+    const response = await axios.get('http://localhost:3000/get-videos');
+    if (response.data && response.data.success) {
+      const videos = response.data.videos;
+
+      // Tampilkan daftar video dalam dialog
+      const { value: selectedVideoId } = await Swal.fire({
+        title: 'Pilih Video',
+        html: `
+          <div class="video-list" style="max-height: 400px; overflow-y: auto;">
+            ${videos
+              .map(
+                (video) => `
+                  <div 
+                    style="margin-bottom: 10px; cursor: pointer; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" 
+                    data-id="${video.id_video}">
+                    <strong>${video.nama_video}</strong><br>
+                    <video 
+                      src="D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov" 
+                      style="max-width: 100%; height: auto; margin-top: 5px;" 
+                      controls>
+                    </video>
+                  </div>
+                `
+              )
+              .join('')}
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Pilih',
+        preConfirm: () => {
+          const selectedVideoElement = Swal.getPopup().querySelector('.video-list div[data-selected="true"]');
+          if (!selectedVideoElement) {
+            Swal.showValidationMessage('Harap pilih satu video!');
+            return null;
+          }
+          return selectedVideoElement.getAttribute('data-id');
+        },
+        didOpen: () => {
+          const videoElements = Swal.getPopup().querySelectorAll('.video-list div');
+          videoElements.forEach((element) => {
+            element.addEventListener('click', () => {
+              videoElements.forEach((el) => {
+                el.setAttribute('data-selected', 'false');
+                el.style.border = '1px solid #ccc';
+              });
+              element.setAttribute('data-selected', 'true');
+              element.style.border = '2px solid #007bff';
+            });
+          });
+        },
       });
 
-      const response = await fetch('http://localhost:3000/upload', {
-        method: 'POST',
-        body: formData,
-        // Optional: tambahkan timeout
-        signal: AbortSignal.timeout(30000)
-      });
-
-      // Log response
-      console.log('Response Status:', response.status);
-
-      // Parse respons
-      const result = await response.json();
-
-      // Cek status respons
-      if (response.ok) {
-        console.log('Upload Successful:', result);
-        Swal.fire('Success!', 'Video uploaded successfully!', 'success');
-      } else {
-        throw new Error(result.error || 'Upload failed');
+      if (selectedVideoId) {
+        const selectedVideo = videos.find(video => video.id_video == selectedVideoId);
+        if (selectedVideo) {
+          // Kirim path video ke fungsi changeClip dalam format URL
+          const videoPath = encodeURI(`file:///D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov`);
+          await this.changeClip(layerIndex, clipIndex, videoPath);
+        } else {
+          throw new Error('Video yang dipilih tidak ditemukan');
+        }
       }
-    } catch (error) {
-      console.error('Complete Upload Error:', error);
-      
-      // Tampilkan pesan error mendetail
-      Swal.fire('Upload Error', 
-        `Failed to upload video: ${error.message}`, 
-        'error'
-      );
+    } else {
+      throw new Error(response.data.error || 'Gagal mengambil daftar video');
     }
+  } catch (error) {
+    console.error('Error in showLayerClipDialog:', error);
+    Swal.fire('Error', `Terjadi kesalahan: ${error.message}`, 'error');
   }
 },
+
+async changeClip(layerIndex, clipIndex, videoPath) {
+  try {
+    const apiUrl = `http://localhost:8080/composition/layers/${layerIndex}/clips/${clipIndex}/open`;
+
+    // Kirim permintaan POST ke Resolume API
+    const response = await axios.post(apiUrl, videoPath, {
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
+
+    if (response.status === 204) {
+      console.log(`Video berhasil dimuat ke Layer ${layerIndex}, Clip ${clipIndex}`);
+    } else {
+      throw new Error('Gagal memuat video, status tidak sesuai');
+    }
+  } catch (error) {
+    console.error('Error in changeClip:', error);
+    Swal.fire('Error', `Gagal memuat video: ${error.message}`, 'error');
+  }
+}, 
+    async showUploadDialog() {
+      const { value: file } = await Swal.fire({
+        title: 'Upload Content',
+        html: `
+          <input id="file-input" type="file" accept="video/*" class="form-control">
+          <div class="text-center">
+            <video id="video-preview" controls style="max-width: 100%; margin-top: 10px; display: none;"></video>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Upload',
+        didOpen: () => {
+          const fileInput = Swal.getPopup().querySelector('#file-input');
+          const videoPreview = Swal.getPopup().querySelector('#video-preview');
+
+          fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+              console.log('Selected File:', file);
+              const url = URL.createObjectURL(file);
+              videoPreview.src = url;
+              videoPreview.style.display = 'block';
+            } else {
+              videoPreview.style.display = 'none';
+            }
+          });
+        },
+        preConfirm: () => {
+          const fileInput = Swal.getPopup().querySelector('#file-input');
+          if (!fileInput.files.length) {
+            Swal.showValidationMessage('Please select a video file!');
+            return null;
+          }
+          return fileInput.files[0];
+        },
+      });
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('video', file);
+
+        try {
+          // Log detail file
+          console.log('Uploading File Details:', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          });
+
+          const response = await fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            body: formData,
+            // Optional: tambahkan timeout
+            signal: AbortSignal.timeout(30000)
+          });
+
+          // Log response
+          console.log('Response Status:', response.status);
+
+          // Parse respons
+          const result = await response.json();
+
+          // Cek status respons
+          if (response.ok) {
+            console.log('Upload Successful:', result);
+            Swal.fire('Success!', 'Video uploaded successfully!', 'success');
+          } else {
+            throw new Error(result.error || 'Upload failed');
+          }
+        } catch (error) {
+          console.error('Complete Upload Error:', error);
+          
+          // Tampilkan pesan error mendetail
+          Swal.fire('Upload Error', 
+            `Failed to upload content: ${error.message}`, 
+            'error'
+          );
+        }
+      }
+    },
 
     async fetchLayers() {
       this.isLoading = true;
@@ -346,8 +441,8 @@ export default {
     },
   },
   mounted() {
-    this.fetchLayers(); // Memuat data saat komponen dipasang
-    this.fetchVideos();
+    this.fetchLayers();
+    // this.fetchVideos();
   },
 
 };
