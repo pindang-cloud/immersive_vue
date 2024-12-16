@@ -79,11 +79,9 @@ app.post('/upload', (req, res) => {
       });
     }
 
-    // Log informasi file
     console.log('Request file:', req.file);
     console.log('Request body:', req.body);
 
-    // Cek apakah file ada
     if (!req.file) {
       console.error('No file uploaded');
       return res.status(400).json({ 
@@ -93,7 +91,7 @@ app.post('/upload', (req, res) => {
 
     try {
       // Simpan path relatif
-      const filePath = `/video/${req.file.filename}`; // Sesuaikan dengan folder Anda
+      const filePath = `D:/vuejs_immersiveDinner/immersive_vue/backend/video/`;
       const videoName = req.file.originalname;
 
       // Tambahkan logging sebelum query

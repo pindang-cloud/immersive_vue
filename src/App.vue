@@ -14,18 +14,19 @@
               Upload Konten
             </b-dropdown-item>
             <b-dropdown-divider></b-dropdown-divider>
+            <b-dropdown-item @click="addColumn">
+              Tambah Column
+            </b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-navbar>
       <b-container>
       <h2 class="text-center mb-3 mt-3">Pilih Meja dan Konten</h2>
 
-      <!-- Spinner untuk loading -->
       <b-spinner v-if="isLoading" class="d-block mx-auto" label="Loading..." ></b-spinner>
 
-      <!-- Tabel dengan gambar tersusun horizontal -->
       <b-table v-if="!isLoading && layers.length > 0" :items="layers" :fields="tableFields" class="mt-3" responsive >
-        <!-- Cell untuk Meja -->
+
         <template #cell(Meja)="data">
           <div class="text-center">Meja {{ data.index + 1 }}</div>
         </template>
@@ -142,102 +143,102 @@ export default {
     },
 
     async showLayerClipDialog(layerIndex, clipIndex) {
-  console.log(`Layer: ${layerIndex}, Clip: ${clipIndex}`);
+      console.log(`Layer: ${layerIndex}, Clip: ${clipIndex}`);
 
-  try {
-    // Ambil daftar video dari server
-    const response = await axios.get('http://localhost:3000/get-videos');
-    if (response.data && response.data.success) {
-      const videos = response.data.videos;
+      try {
+        // Ambil daftar video dari server
+        const response = await axios.get('http://localhost:3000/get-videos');
+        if (response.data && response.data.success) {
+          const videos = response.data.videos;
 
-      // Tampilkan daftar video dalam dialog
-      const { value: selectedVideoId } = await Swal.fire({
-        title: 'Pilih Video',
-        html: `
-          <div class="video-list" style="max-height: 400px; overflow-y: auto;">
-            ${videos
-              .map(
-                (video) => `
-                  <div 
-                    style="margin-bottom: 10px; cursor: pointer; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" 
-                    data-id="${video.id_video}">
-                    <strong>${video.nama_video}</strong><br>
-                    <video 
-                      src="D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov" 
-                      style="max-width: 100%; height: auto; margin-top: 5px;" 
-                      controls>
-                    </video>
-                  </div>
-                `
-              )
-              .join('')}
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Pilih',
-        preConfirm: () => {
-          const selectedVideoElement = Swal.getPopup().querySelector('.video-list div[data-selected="true"]');
-          if (!selectedVideoElement) {
-            Swal.showValidationMessage('Harap pilih satu video!');
-            return null;
-          }
-          return selectedVideoElement.getAttribute('data-id');
-        },
-        didOpen: () => {
-          const videoElements = Swal.getPopup().querySelectorAll('.video-list div');
-          videoElements.forEach((element) => {
-            element.addEventListener('click', () => {
-              videoElements.forEach((el) => {
-                el.setAttribute('data-selected', 'false');
-                el.style.border = '1px solid #ccc';
+          // Tampilkan daftar video dalam dialog
+          const { value: selectedVideoId } = await Swal.fire({
+            title: 'Pilih Video',
+            html: `
+              <div class="video-list" style="max-height: 400px; overflow-y: auto;">
+                ${videos
+                  .map(
+                    (video) => `
+                      <div 
+                        style="margin-bottom: 10px; cursor: pointer; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" 
+                        data-id="${video.id_video}">
+                        <strong>${video.nama_video}</strong><br>
+                        <video 
+                          src="D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov" 
+                          style="max-width: 100%; height: auto; margin-top: 5px;" 
+                          controls>
+                        </video>
+                      </div>
+                    `
+                  )
+                  .join('')}
+              </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Pilih',
+            preConfirm: () => {
+              const selectedVideoElement = Swal.getPopup().querySelector('.video-list div[data-selected="true"]');
+              if (!selectedVideoElement) {
+                Swal.showValidationMessage('Harap pilih satu video!');
+                return null;
+              }
+              return selectedVideoElement.getAttribute('data-id');
+            },
+            didOpen: () => {
+              const videoElements = Swal.getPopup().querySelectorAll('.video-list div');
+              videoElements.forEach((element) => {
+                element.addEventListener('click', () => {
+                  videoElements.forEach((el) => {
+                    el.setAttribute('data-selected', 'false');
+                    el.style.border = '1px solid #ccc';
+                  });
+                  element.setAttribute('data-selected', 'true');
+                  element.style.border = '2px solid #007bff';
+                });
               });
-              element.setAttribute('data-selected', 'true');
-              element.style.border = '2px solid #007bff';
-            });
+            },
           });
-        },
-      });
 
-      if (selectedVideoId) {
-        const selectedVideo = videos.find(video => video.id_video == selectedVideoId);
-        if (selectedVideo) {
-          // Kirim path video ke fungsi changeClip dalam format URL
-          const videoPath = encodeURI(`file:///D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov`);
-          await this.changeClip(layerIndex, clipIndex, videoPath);
+          if (selectedVideoId) {
+            const selectedVideo = videos.find(video => video.id_video == selectedVideoId);
+            if (selectedVideo) {
+              // Kirim path video ke fungsi changeClip dalam format URL
+              const videoPath = encodeURI(`file:///D:/vuejs_immersiveDinner/immersive_vue/backend/video/1734162501648_fun-3d-cartoon-chicken-with-a-helmet-with-alpha-c-2024-11-14-16-49-01-utc.mov`);
+              await this.changeClip(layerIndex, clipIndex, videoPath);
+            } else {
+              throw new Error('Video yang dipilih tidak ditemukan');
+            }
+          }
         } else {
-          throw new Error('Video yang dipilih tidak ditemukan');
+          throw new Error(response.data.error || 'Gagal mengambil daftar video');
         }
+      } catch (error) {
+        console.error('Error in showLayerClipDialog:', error);
+        Swal.fire('Error', `Terjadi kesalahan: ${error.message}`, 'error');
       }
-    } else {
-      throw new Error(response.data.error || 'Gagal mengambil daftar video');
-    }
-  } catch (error) {
-    console.error('Error in showLayerClipDialog:', error);
-    Swal.fire('Error', `Terjadi kesalahan: ${error.message}`, 'error');
-  }
-},
+    },
 
-async changeClip(layerIndex, clipIndex, videoPath) {
-  try {
-    const apiUrl = `http://localhost:8080/composition/layers/${layerIndex}/clips/${clipIndex}/open`;
+    async changeClip(layerIndex, clipIndex, videoPath) {
+      try {
+        const apiUrl = `http://localhost:8080/composition/layers/${layerIndex}/clips/${clipIndex}/open`;
 
-    // Kirim permintaan POST ke Resolume API
-    const response = await axios.post(apiUrl, videoPath, {
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    });
+        // Kirim permintaan POST ke Resolume API
+        const response = await axios.post(apiUrl, videoPath, {
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+        });
 
-    if (response.status === 204) {
-      console.log(`Video berhasil dimuat ke Layer ${layerIndex}, Clip ${clipIndex}`);
-    } else {
-      throw new Error('Gagal memuat video, status tidak sesuai');
-    }
-  } catch (error) {
-    console.error('Error in changeClip:', error);
-    Swal.fire('Error', `Gagal memuat video: ${error.message}`, 'error');
-  }
-}, 
+        if (response.status === 204) {
+          console.log(`Video berhasil dimuat ke Layer ${layerIndex}, Clip ${clipIndex}`);
+        } else {
+          throw new Error('Gagal memuat video, status tidak sesuai');
+        }
+      } catch (error) {
+        console.error('Error in changeClip:', error);
+        Swal.fire('Error', `Gagal memuat video: ${error.message}`, 'error');
+      }
+    }, 
     async showUploadDialog() {
       const { value: file } = await Swal.fire({
         title: 'Upload Content',
@@ -426,17 +427,107 @@ async changeClip(layerIndex, clipIndex, videoPath) {
 
     // Fungsi untuk menambahkan Meja baru
     async addLayer() {
-      try {
-        const response = await axios.post(
-          `${this.apiBaseUrl}/composition/layers/add`
-        );
+    try {
+      // Tampilkan dialog konfirmasi sebelum menambahkan layer
+      const result = await Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Anda akan menambahkan meja baru.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, tambahkan!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+      });
+
+      if (result.isConfirmed) {
+        // Jika pengguna menekan tombol "Ya"
+        const response = await axios.post(`${this.apiBaseUrl}/composition/layers/add`);
+
         if ([200, 201, 204].includes(response.status)) {
+          // Tampilkan pesan sukses
+          await Swal.fire({
+            title: 'Berhasil!',
+            text: 'Meja baru berhasil ditambahkan!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          });
+
           this.responseMessage = "Meja baru berhasil ditambahkan!";
-          await this.fetchLayers();
+          await this.fetchLayers(); // Memuat ulang daftar layer
+        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        // Jika pengguna menekan tombol "Batal"
+        Swal.fire({
+          title: 'Dibatalkan',
+          text: 'Meja baru tidak jadi ditambahkan.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
+    } catch (error) {
+      // Tampilkan pesan error jika ada kesalahan
+      await Swal.fire({
+        title: 'Kesalahan!',
+        text: 'Gagal menambahkan meja. Silakan coba lagi.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+
+      console.error("Error adding layer:", error);
+      this.responseMessage = "Gagal menambahkan Meja.";
+    }
+  },
+
+    async playColumn(){
+      try {
+        const columnRespon = await axios.post(`${this.apiBaseUrl}/composition/columns/3/connect`);
+        console.log(columnRespon);
+      } catch (error) {
+        console.error("Error connect column", error);
+      }
+    },
+
+    async addColumn() {
+      try {
+        const result = await Swal.fire({
+          title: 'Apa kamu yakin?',
+          text: "Apakah kamu ingin menambahkan kolom baru?",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Ya!',
+          cancelButtonText: 'Batal',
+          reverseButtons: true
+        });
+
+        if (result.isConfirmed) {
+          const columnRespon = await axios.post(`${this.apiBaseUrl}/composition/columns/add`);
+
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Kolom berhasil ditambahkan.',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          });
+
+          console.log(columnRespon);
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          // Jika pengguna menekan tombol "No"
+          Swal.fire({
+            title: 'Batal',
+            text: 'Kolom batal di tambahkan.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
         }
       } catch (error) {
-        console.error("Error adding layer:", error);
-        this.responseMessage = "Gagal menambahkan Meja.";
+        Swal.fire({
+          title: 'Error!',
+          text: 'Terjadi kesalahan saat menambahkan kolom.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+
+        console.error("Error add column", error);
       }
     },
   },
